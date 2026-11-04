@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="An interactive, end-to-end architecture map of the BALENSIA Node.js backend."
+    />
+    <meta name="theme-color" content="#07111f" />
+    <title>BALENSIA Backend Architecture</title>
+    <link rel="stylesheet" href="./assets/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="BALENSIA backend architecture home">
+        <img class="brand-mark" src="./assets/logo-dark.png" alt="BALENSIA logo" width="38" height="38" />
+        <span>
+          <strong>BALENSIA</strong>
+          <small>Backend system map</small>
+        </span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        <a href="#architecture">Architecture</a>
+        <a href="#modules">Modules</a>
+        <a href="#workflows">Workflows</a>
+        <a href="#consistency">Propagation</a>
+        <a href="#runtime">Runtime</a>
+        <a href="#boundaries">Boundaries</a>
+      </nav>
+
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme">
+        <span class="theme-icon" aria-hidden="true">◐</span>
+        <span class="theme-label">Theme</span>
+      </button>
+    </header>
+
+    <main id="main-content">
+      <section class="hero shell" id="top">
+        <div class="hero-copy">
+          <div class="eyebrow"><span></span> Node.js service · architecture explorer</div>
+          <h1>The complete BALENSIA backend, made visible.</h1>
+          <p class="hero-lede">
+            Follow a request from request IDs and security headers through rate limits,
+            JWT sessions, validation, controllers and domain services into MongoDB and
+            Redis. Then trace the reliability, analytics, OCR, SIA, recurring, notification
+            and data-rights paths around it, and the worker jobs that keep it running.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button primary" href="#architecture">Explore the system</a>
+            <a class="button secondary" href="#workflows">Trace a workflow</a>
+          </div>
+
+          <ul class="tech-list" aria-label="Core backend technologies">
+            <li>Node.js 20</li>
+            <li>Express 5</li>
+            <li>MongoDB · Mongoose 9</li>
+            <li>Redis</li>
+            <li>JWT + refresh sessions</li>
+            <li>Tesseract.js</li>
+            <li>Firebase Admin</li>
+            <li>OpenAI · Gemini · Groq</li>
+            <li>Jest · Playwright</li>
+          </ul>
+        </div>
+
+        <div class="hero-map" aria-label="Simplified backend processing loop">
+          <div class="map-orbit orbit-one" aria-hidden="true"></div>
+          <div class="map-orbit orbit-two" aria-hidden="true"></div>
+          <div class="hero-node hero-node-main">
+            <span class="node-kicker">Backend</span>
+            <strong>Express API</strong>
+            <small>Web role + worker role</small>
+          </div>
+          <div class="hero-node hero-node-query">
+            <span class="node-dot violet"></span>
+            <strong>Guardrails</strong>
+            <small>Helmet · limits · JWT · CSRF · Joi</small>
+          </div>
+          <div class="hero-node hero-node-service">
+            <span class="node-dot cyan"></span>
+            <strong>Domain engines</strong>
+            <small>Finance · OCR · SIA · Push</small>
+          </div>
+          <div class="hero-node hero-node-result">
+            <span class="node-dot green"></span>
+            <strong>State</strong>
+            <small>MongoDB · GridFS · Redis</small>
+          </div>
+          <span class="orbit-label request-label">request</span>
+          <span class="orbit-label response-label">result</span>
+        </div>
+      </section>
+
+      <section class="section shell" id="architecture">
+        <div class="section-heading">
+          <div>
+            <span class="section-index">01 / System overview</span>
+            <h2>Every request crosses five responsibility layers</h2>
+          </div>
+          <p>
+            Routes define the public contract, middleware protects it, controllers commit the
+            write, services keep derived data correct, and state or external systems hold the
+            lasting result.
+          </p>
+        </div>
+
+        <div class="architecture-board">
+          <div class="board-topline">
+            <span class="live-pill"><span></span> Node.js runtime</span>
+            <span class="board-note">97 HTTP endpoints · 10 route groups · 9 scheduled jobs · 262 test suites</span>
+          </div>
+
+          <div class="architecture-flow" aria-label="Five-layer backend architecture">
+            <article class="layer-card layer-ui">
+              <div class="layer-number">01</div>
+              <span class="layer-type">Ingress</span>
+              <h3>Express app</h3>
+              <p>Assigns a request ID, records metrics, sets Helmet headers, applies the CORS allowlist, and routes /auth, /api, /expense, /income, /bills, /ml, /report, /chart, /sia and /health.</p>
+              <div class="mini-tags">
+                <span>X-Request-ID</span><span>Helmet</span><span>CORS</span><span>JSON</span>
+              </div>
+            </article>
+
+            <div class="flow-arrow" aria-hidden="true"><span>guard</span></div>
+
+            <article class="layer-card layer-state">
+              <div class="layer-number">02</div>
+              <span class="layer-type">Protection</span>
+              <h3>Middleware</h3>
+              <p>Rate-limits by IP, email or user, verifies the JWT and its live session, checks CSRF on cookie endpoints, validates input, and inspects uploads.</p>
+              <div class="mini-tags">
+                <span>Rate limits</span><span>JWT + sid</span><span>CSRF</span><span>Joi</span><span>Multer</span>
+              </div>
+            </article>
+
+            <div class="flow-arrow" aria-hidden="true"><span>dispatch</span></div>
+
+            <article class="layer-card layer-api">
+              <div class="layer-number">03</div>
+              <span class="layer-type">Orchestration</span>
+              <h3>Controllers</h3>
+              <p>Scope every query to the user, enforce idempotency, reserve sync work, commit the primary write, and shape the response.</p>
+              <div class="mini-tags">
+                <span>Ownership</span><span>Idempotency</span><span>Reserve → commit</span>
+              </div>
+            </article>
+
+            <div class="flow-arrow" aria-hidden="true"><span>execute</span></div>
+
+            <article class="layer-card layer-services">
+              <div class="layer-number">04</div>
+              <span class="layer-type">Domain logic</span>
+              <h3>Services & engines</h3>
+              <p>Synchronize budgets and reports, run analytics, OCR receipts, ground SIA answers, automate recurring expenses, deliver push, and handle export, import and deletion.</p>
+              <div class="mini-tags">
+                <span>Sync recovery</span><span>Analytics</span><span>OCR</span><span>SIA</span><span>Push</span>
+              </div>
+            </article>
+
+            <div class="flow-arrow return-arrow" aria-hidden="true"><span>persist</span></div>
+
+            <article class="layer-card layer-response">
+              <div class="layer-number">05</div>
+              <span class="layer-type">State & integrations</span>
+              <h3>Data boundary</h3>
+              <p>MongoDB (with GridFS) is the source of truth. Redis caches reads and coordinates jobs. The ML service, LLM/STT providers, Brevo and FCM do specialist work.</p>
+              <div class="mini-tags">
+                <span>MongoDB</span><span>Redis</span><span>ML</span><span>LLM</span><span>Brevo</span><span>FCM</span>
+              </div>
+            </article>
+          </div>
+
+          <div class="return-rail" aria-hidden="true">
+            <span class="rail-dot"></span>
+            <span class="rail-line"></span>
+            <span>Structured data or a controlled error code returns through the API</span>
+          </div>
+        </div>
+
+        <div class="clarity-strip">
+          <span class="clarity-icon" aria-hidden="true">i</span>
+          <p>
+            <strong>Core idea:</strong> MongoDB is the source of truth; Redis is disposable.
+            A committed financial write always succeeds. Its budget and report follow-ups are
+            reserved before the write, fenced by revision, and repaired on read if anything
+            failed. The web role serves traffic; the worker role owns the scheduled jobs.
+          </p>
+        </div>
+      </section>
+
+      <section class="section shell" id="modules">
+        <div class="section-heading">
+          <div>
+            <span class="section-index">02 / Module explorer</span>
+            <h2>Inspect one backend responsibility at a time</h2>
+          </div>
+          <p>
+            Select a module to see what it owns, the code path it follows, and the technical
+            detail that matters most.
+          </p>
+        </div>
+
+        <div class="explorer">
+          <div class="module-list" id="module-list" role="tablist" aria-label="Backend modules"></div>
+
+          <article
+            class="module-panel"
+            id="module-panel"
+            role="tabpanel"
+            aria-live="polite"
+          >
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker" id="module-kicker">Module</span>
+                <h3 id="module-title"></h3>
+              </div>
+              <span class="ownership-badge" id="module-owner"></span>
+            </div>
+            <p class="panel-purpose" id="module-purpose"></p>
+            <div class="module-flow" id="module-flow" aria-label="Selected module flow"></div>
+            <div class="detail-callout">
+              <span>Why it matters</span>
+              <p id="module-detail"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section shell" id="workflows">
+        <div class="section-heading">
+          <div>
+            <span class="section-index">03 / End-to-end workflows</span>
+            <h2>Trace the real execution path step by step</h2>
+          </div>
+          <p>
+            Each trace follows the actual route, middleware, controller, service, storage, cache,
+            job, and external-integration behavior in the service.
+          </p>
+        </div>
+
+        <div class="workflow-browser">
+          <div class="workflow-selector">
+            <label for="workflow-select">Choose a workflow</label>
+            <select id="workflow-select"></select>
+            <div class="workflow-category" id="workflow-category"></div>
+          </div>
+
+          <article class="workflow-panel" aria-live="polite">
+            <div class="workflow-heading">
+              <div>
+                <span class="panel-kicker">Active trace</span>
+                <h3 id="workflow-title"></h3>
+                <p id="workflow-purpose"></p>
+              </div>
+              <div class="step-counter">
+                <span id="step-count">0</span>
+                <small>steps</small>
+              </div>
+            </div>
+            <ol class="workflow-steps" id="workflow-steps"></ol>
+          </article>
+        </div>
+      </section>
+
+      <section class="section shell" id="consistency">
+        <div class="section-heading">
+          <div>
+            <span class="section-index">04 / Write propagation</span>
+            <h2>One financial write updates several derived states</h2>
+          </div>
+          <p>
+            Persistence is only the first step. Every expense, income and budget write, CSV
+            import commit and recurring occurrence goes through the same reserve → commit →
+            synchronize path, so derived data can never silently drift.
+          </p>
+        </div>
+
+        <div class="consistency-layout">
+          <div class="mutation-map">
+            <div class="mutation-row">
+              <div class="mutation-source expense-source">
+                <span>Write</span>
+                <strong>Expense changed</strong>
+              </div>
+              <div class="mutation-line" aria-hidden="true"></div>
+              <div class="cache-targets">
+                <span>PendingSync reserve</span><span>Mongo expense</span><span>User caches cleared</span><span>Budget spent</span><span>Report</span><span>Category alerts</span>
+              </div>
+            </div>
+            <div class="mutation-row">
+              <div class="mutation-source budget-source">
+                <span>Write</span>
+                <strong>Budget changed</strong>
+              </div>
+              <div class="mutation-line" aria-hidden="true"></div>
+              <div class="cache-targets">
+                <span>Budget document</span><span>User caches cleared</span><span>Spent recalculated</span><span>Report</span><span>Category alerts</span>
+              </div>
+            </div>
+            <div class="mutation-row">
+              <div class="mutation-source income-source">
+                <span>Write</span>
+                <strong>Income changed</strong>
+              </div>
+              <div class="mutation-line" aria-hidden="true"></div>
+              <div class="cache-targets">
+                <span>Idempotent income</span><span>Report reservation</span><span>Report regenerated</span>
+              </div>
+            </div>
+            <div class="mutation-row">
+              <div class="mutation-source bill-source">
+                <span>Automation</span>
+                <strong>Recurring due / CSV commit</strong>
+              </div>
+              <div class="mutation-line" aria-hidden="true"></div>
+              <div class="cache-targets">
+                <span>Deterministic expense id</span><span>Budget + report</span><span>Next due date</span><span>Notification + push</span>
+              </div>
+            </div>
+          </div>
+
+          <aside class="query-card">
+            <span class="panel-kicker">Disposable Redis</span>
+            <h3>Fast reads that MongoDB can always replace</h3>
+            <code>lastWeek:&lt;userId&gt;</code>
+            <code>category:&lt;userId&gt;:&lt;period&gt;</code>
+            <code>pie:&lt;userId&gt;:&lt;range&gt;:&lt;type&gt;</code>
+            <code>pieComparison:&lt;userId&gt;:&lt;month&gt;</code>
+            <code>report:&lt;userId&gt;</code>
+            <code>job-lease:&lt;job&gt;</code>
+            <p>
+              View caches live five minutes and are tracked in cachekeys:&lt;userId&gt;. The
+              report cache lives one hour and only accepts newer revisions. If a write
+              crashes mid-sync, GET /report, budgets and charts repair the pending work on read.
+            </p>
+            <dl>
+              <div><dt>View TTL</dt><dd>5 minutes</dd></div>
+              <div><dt>Report TTL</dt><dd>1 hour</dd></div>
+              <div><dt>Redis down</dt><dd>Read Mongo</dd></div>
+              <div><dt>Source of truth</dt><dd>MongoDB</dd></div>
+            </dl>
+          </aside>
+        </div>
+      </section>
+
+      <section class="section shell" id="runtime">
+        <div class="section-heading compact-heading">
+          <div>
+            <span class="section-index">05 / Runtime paths</span>
+            <h2>The web role serves requests; the worker role runs the jobs</h2>
+          </div>
+        </div>
+
+        <div class="path-comparison">
+          <article class="path-card">
+            <div class="path-card-heading">
+              <span class="path-icon axios-icon" aria-hidden="true">W</span>
+              <div><span>PROCESS_ROLE=web</span><h3>HTTP request lifecycle</h3></div>
+            </div>
+            <p>A client call passes through Express and returns one controlled response. The platform routes traffic using /health/ready.</p>
+            <ul>
+              <li>Request ID → metrics → Helmet → CORS → JSON parser</li>
+              <li>Group or feature limiter → JWT + live session → Joi / upload checks</li>
+              <li>Controller reserves sync work, commits the write, then synchronizes</li>
+              <li>Unhandled errors are logged and reported with request ID context</li>
+            </ul>
+          </article>
+
+          <article class="path-card">
+            <div class="path-card-heading">
+              <span class="path-icon fetch-icon" aria-hidden="true">C</span>
+              <div><span>PROCESS_ROLE=worker</span><h3>Scheduled jobs under Redis leases</h3></div>
+            </div>
+            <p>Nine cron modules load only on the worker (or a single "all" process). Times are server-local.</p>
+            <ul>
+              <li>Every 2 min: export generation · every 15 min: push retry</li>
+              <li>03:00 account purge · 04:00 stale devices · 05:00 export cleanup</li>
+              <li>06:00 receipt retention · 07:00 import-session expiry</li>
+              <li>20:30 recurring auto-log and ML retraining check</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section shell" id="boundaries">
+        <div class="section-heading">
+          <div>
+            <span class="section-index">06 / Honest boundaries</span>
+            <h2>What this backend guarantees—and what still needs attention</h2>
+          </div>
+          <p>
+            These distinctions keep the service explanation accurate and make its next
+            engineering priorities visible.
+          </p>
+        </div>
+
+        <!-- Category 1: Guaranteed Capabilities -->
+        <div class="boundary-category">
+          <div class="boundary-category-header">
+            <div class="boundary-category-title">
+              <span class="boundary-accent-line" style="background: var(--green);" aria-hidden="true"></span>
+              <h3>Guaranteed Capabilities</h3>
+            </div>
+            <p class="boundary-category-desc">Architectural guarantees strictly enforced across persistence, session lifecycles, and reliability engines.</p>
+          </div>
+
+          <div class="boundary-grid">
+            <article>
+              <span class="boundary-state true-state">It does</span>
+              <h3>Enforce user ownership</h3>
+              <p>Every protected query includes req.userId. Another user's receipt, export, import session or recurring template returns the same 404 as a missing one.</p>
+            </article>
+            <article>
+              <span class="boundary-state true-state">It does</span>
+              <h3>Keep committed writes consistent</h3>
+              <p>PendingSync reservations, revision-fenced recomputes and read-time repair mean a crash between the write and its budget/report update is recovered, not lost.</p>
+            </article>
+            <article>
+              <span class="boundary-state true-state">It does</span>
+              <h3>Expire and rotate sessions</h3>
+              <p>Access tokens expire (15m default), refresh sessions rotate on every use, and reuse of an old refresh token revokes every session.</p>
+            </article>
+            <article>
+              <span class="boundary-state true-state">It does</span>
+              <h3>Survive a Redis outage</h3>
+              <p>Startup waits five seconds and then serves; caches fall through to MongoDB and each job is either fail-open or fail-closed.</p>
+            </article>
+            <article>
+              <span class="boundary-state true-state">It does</span>
+              <h3>Build deterministic analytics</h3>
+              <p>Report scores, signals and forecasts come from analyzers and a robust statistical trend, not from an ML or LLM guess.</p>
+            </article>
+          </div>
+        </div>
+
+        <!-- Category 2: Architectural Non-Goals -->
+        <div class="boundary-category">
+          <div class="boundary-category-header">
+            <div class="boundary-category-title">
+              <span class="boundary-accent-line" style="background: var(--violet);" aria-hidden="true"></span>
+              <h3>Architectural Non-Goals</h3>
+            </div>
+            <p class="boundary-category-desc">Intentional architectural scope boundaries—what the Node.js backend deliberately delegates or forbids.</p>
+          </div>
+
+          <div class="boundary-grid">
+            <article>
+              <span class="boundary-state false-state">It does not</span>
+              <h3>Train ML models itself</h3>
+              <p>The backend records feedback and calls /retrain-model; the separate ML service owns training, validation and activation.</p>
+            </article>
+            <article>
+              <span class="boundary-state false-state">It does not</span>
+              <h3>Let AI write financial data</h3>
+              <p>SIA answers are read-only and parse-expense returns a suggestion; the user saves it through the normal Add Expense path.</p>
+            </article>
+          </div>
+        </div>
+
+        <!-- Category 3: Active Limits & Maintenance -->
+        <div class="boundary-category">
+          <div class="boundary-category-header">
+            <div class="boundary-category-title">
+              <span class="boundary-accent-line" style="background: var(--orange);" aria-hidden="true"></span>
+              <h3>Active Limits & Maintenance</h3>
+            </div>
+            <p class="boundary-category-desc">Confirmed technical boundaries, distributed clock nuances, and maintenance notes in current backend code.</p>
+          </div>
+
+          <div class="boundary-grid">
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Group limiter is IP-keyed and per-process</h3>
+              <p>apiLimiter runs before verifyToken sets req.userId, and no limiter configures a shared store, so counts live in each instance's memory.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>SIA chat answers are not number-checked</h3>
+              <p>The /ask validator checks format, IDs and internal field names only. Only the monthly summary cross-checks every amount against cited facts.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Queued exports live on one instance's disk</h3>
+              <p>Exports of 5,000+ rows are written by the worker to backend/generated-exports, while downloads are served by the web service, a separate service in render.yaml.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Account purge misses five collections</h3>
+              <p>Tier B does not delete ExportRequest, ImportSession, NotificationPreference, AiSummaryPreference or SiaPreference records.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Money is still float-first</h3>
+              <p>Legacy float amounts remain authoritative; render.yaml keeps MONEY_MINOR_DUAL_WRITE_ENABLED "false" while the DAT-001 migration finishes.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Several clocks are in play</h3>
+              <p>Budget months use server-local time, recurring due dates the UTC 1st, skips and projections APP_TIME_ZONE, and crons run on server-local time.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Receipts are images only</h3>
+              <p>Only JPEG and PNG are accepted (PDF returns 415). Parsing uses heuristics: the merchant is the first two words, and there are no line items or category.</p>
+            </article>
+            <article>
+              <span class="boundary-state caution-state">Current limit</span>
+              <h3>Error aggregation is a no-op by default</h3>
+              <p>Errors are reported through a redacting no-op transport. The Sentry transport requires @sentry/node, which is not a dependency.</p>
+            </article>
+          </div>
+        </div>
+
+        <!-- Category 4: Resolved Improvements -->
+        <div class="boundary-category">
+          <div class="boundary-category-header">
+            <div class="boundary-category-title">
+              <span class="boundary-accent-line" style="background: var(--cyan);" aria-hidden="true"></span>
+              <h3>Recently Resolved Improvements</h3>
+            </div>
+            <p class="boundary-category-desc">Previously identified limitations that have been engineered, resolved, and verified in the current backend codebase.</p>
+          </div>
+
+          <div class="boundary-grid">
+            <article>
+              <span class="boundary-state resolved-state">Resolved in 9a43723</span>
+              <h3>On-demand financial export deletion</h3>
+              <p>DELETE /api/export/:id safely removes MongoDB ExportRequest documents and purges physical files from backend/generated-exports on demand, preventing stale artifacts.</p>
+            </article>
+            <article>
+              <span class="boundary-state resolved-state">Resolved in 9a43723</span>
+              <h3>Synchronous exports recorded in database</h3>
+              <p>Small exports (&lt; 5,000 rows) now persist an ExportRequest record with status 'ready', ensuring synchronous downloads are traceable in the user's past export history.</p>
+            </article>
+            <article>
+              <span class="boundary-state resolved-state">Resolved in 9a43723</span>
+              <h3>Multi-format date parsing resiliency</h3>
+              <p>Centralized dateParsing.js utility provides robust parsing for ISO strings, custom formats (dd-MM-yyyy, yyyy-MM-dd), and timezone offsets, guarded by test suites.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta shell">
+        <div>
+          <span class="section-index">The architecture in one sentence</span>
+          <h2>Routes protect the contract. Controllers commit the write. Sync recovery keeps derived data honest. MongoDB remembers. Redis accelerates. Workers keep the system moving.</h2>
+        </div>
+        <a class="button primary" href="#top">Back to overview</a>
+      </section>
+    </main>
+
+    <footer class="site-footer shell">
+      <div class="brand footer-brand">
+        <img class="brand-mark" src="./assets/logo-dark.png" alt="BALENSIA logo" width="38" height="38" />
+        <span><strong>BALENSIA</strong><small>Backend architecture</small></span>
+      </div>
+      <p>Interactive technical documentation · GitHub Pages ready</p>
+    </footer>
+
+    <script src="./assets/app.js"></script>
+  </body>
+</html>
